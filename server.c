@@ -33,7 +33,7 @@ void judge(char *result, char *buf, int enemy) {
 int main(int argc, char const* argv[]) {
     int listenfd, connfd, n;
     socklen_t clilen;
-    char buf[MAXLEN], result[MAXLEN], score[MAXLEN];
+    char buf[MAXLEN], result[MAXLEN];
     struct sockaddr_in cliaddr, servaddr;
 
     // create socket
