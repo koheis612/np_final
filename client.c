@@ -6,7 +6,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 
-#define MAXLEN 4096
+#define MAXLEN 256
 #define PORT 3333
 
 void print_description(void) {
@@ -14,10 +14,15 @@ void print_description(void) {
     printf("> ");
 }
 
+void print_score(int win, int lose, int draw) {
+    printf("win: %d, lose: %d, draw: %d\n", win, lose, draw);
+}
+
 int main(int argc, char const* argv[]) {
     int sockfd;
     char sendline[MAXLEN], recvline[MAXLEN];
     struct sockaddr_in servaddr;
+    static int win, lose, draw = 0;
 
     if (argc != 2) {
         fprintf(stderr, "usage: %s <IP address of the server>\n", argv[0]);
@@ -46,6 +51,10 @@ int main(int argc, char const* argv[]) {
 
         // chomp
         sendline[strlen(sendline) - 1] = '\0';
+
+        if (strcmp(sendline, "exit") == 0 || strcmp(sendline, "quit") == 0) {
+            break;
+        }
         send(sockfd, sendline, sizeof(sendline), 0);
 
         if (recv(sockfd, recvline, sizeof(recvline), 0) == 0) {
@@ -55,6 +64,15 @@ int main(int argc, char const* argv[]) {
 
         printf("String received from server: ");
         printf("%s\n", recvline);
+
+        if (strcmp(recvline, "win") == 0) {
+            win++;
+        } else if (strcmp(recvline, "lose") == 0) {
+            lose++;
+        } else if (strcmp(recvline, "draw") == 0) {
+            draw++;
+        }
+        print_score(win, lose, draw);
     }
     return 0;
 }

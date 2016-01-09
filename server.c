@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include <time.h>
 
-#define MAXLEN 4096
+#define MAXLEN 256
 #define PORT 3333
 
 int get_random(void) {
@@ -57,9 +57,7 @@ int main(int argc, char const* argv[]) {
         while ((n = recv(connfd, buf, sizeof(buf), 0)) > 0) {
             printf("String received from and resent to the client: ");
             printf("%s\n", buf);
-
             judge(result, buf, get_random());
-
             send(connfd, result, n, 0);
         }
 
