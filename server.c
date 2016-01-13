@@ -1,14 +1,4 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <unistd.h>
-#include <time.h>
-
-#define MAXLEN 256
-#define PORT 3333
+#include "server.h"
 
 int get_random(void) {
     srand((unsigned int)time(NULL));
@@ -16,39 +6,107 @@ int get_random(void) {
 }
 
 void judge(char *result, char *buf, int enemy) {
+    /*
+     * 1. rock
+     * 2. paper
+     * 3. scissors
+     */
+    int self = atoi(buf);
+    
     printf("buf:%d, enemy:%d\n", atoi(buf), enemy);
-    if (atoi(buf) > 0 && atoi(buf) < 4) {
-        if (atoi(buf) - enemy == 0) {
-            strcpy(result, "draw");
-        } else if (atoi(buf) - enemy == 1) {   
-            strcpy(result, "lose");
-        } else {
-            strcpy(result, "win");
+
+    if (self == 1) {
+        // rock
+        switch (enemy) {
+            case 1:
+                strcpy(result, "draw");
+                break;
+            case 2:
+                strcpy(result, "lose");
+                break;
+            case 3:
+                strcpy(result, "win");
+                break;
+        }
+    } else if (self == 2) {
+        // paper
+        switch (enemy) {
+            case 1:
+                strcpy(result, "win");
+                break;
+            case 2:
+                strcpy(result, "draw");
+                break;
+            case 3:
+                strcpy(result, "lose");
+                break;
+        }
+    } else if (self == 3) {
+        // scissors
+        switch (enemy) {
+            case 1:
+                strcpy(result, "lose");
+                break;
+            case 2:
+                strcpy(result, "win");
+                break;
+            case 3:
+                strcpy(result, "draw");
+                break;
         }
     } else {
         strcpy(result, "bad");
     }
 }
 
+int listen_tcp(const char *service) {
+    int sockfd, err;
+    struct addrinfo hints, *res, *ai;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET6;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
+
+    err = getaddrinfo(NULL, service, &hints, &res);
+    if (err != 0) {
+        fprintf(stderr, "getaddrinfo(): %s\n", gai_strerror(err));
+        return -1;
+    }
+
+    ai = res;
+    sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+    if (sockfd < 0) {
+        return -1;
+    }
+
+    if (bind(sockfd, ai->ai_addr, ai->ai_addrlen) < 0) {
+        perror("bind");
+        return -1;
+    }
+
+    if (listen(sockfd, 5) < 0) {
+        perror("listen");
+        return -1;
+    }
+
+    freeaddrinfo(res);
+    return sockfd;
+}
+
 int main(int argc, char const* argv[]) {
     int listenfd, connfd, n;
-    socklen_t clilen;
     char buf[MAXLEN], result[MAXLEN];
-    struct sockaddr_in cliaddr, servaddr;
+    struct sockaddr_storage cliaddr;
+    socklen_t clilen = sizeof(cliaddr);
 
-    // create socket
-    listenfd = socket(AF_INET, SOCK_STREAM, 0);
-
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    servaddr.sin_port = htons(PORT);
-
-    bind(listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
-    listen(listenfd, 5);
+    listenfd = listen_tcp(PORT);
+    if (listenfd < 0) {
+        perror("server");
+    }
 
     printf("server running.\n");
 
-    // accepting messages
     for (;;) {
         clilen = sizeof(cliaddr);
         connfd = accept(listenfd, (struct sockaddr *)&cliaddr, &clilen);

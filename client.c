@@ -1,13 +1,4 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <arpa/inet.h>
-
-#define MAXLEN 256
-#define PORT 3333
+#include "client.h"
 
 void print_description(void) {
     puts("1. rock\n2. paper\n3. scissors");
@@ -18,31 +9,53 @@ void print_score(int win, int lose, int draw) {
     printf("win: %d, lose: %d, draw: %d\n", win, lose, draw);
 }
 
-int main(int argc, char const* argv[]) {
+int connect_to_server(const char *hostname, const char *service) {
+    int sockfd, err;
+    struct addrinfo hints, *res, *ai;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC; // ipv4/ipv6 dual stack
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_NUMERICSERV;
+
+    err = getaddrinfo(hostname, service, &hints, &res);
+    if (err != 0) {
+        printf("getaddrinfo(): %s\n", gai_strerror(err));
+        return -1;
+    }
+
+    for (ai = res; ai; ai = ai->ai_next) {
+        sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+        if (sockfd < 0) {
+            return -1;
+        }
+        if (connect(sockfd, ai->ai_addr, ai->ai_addrlen) < 0) {
+            close(sockfd);
+            sockfd = -1;
+            continue;
+        } else {
+            break;
+        }
+    }
+
+    freeaddrinfo(res);
+    return sockfd;
+}
+
+int main(int argc, char const* argv[])
+{
     int sockfd;
-    char sendline[MAXLEN], recvline[MAXLEN];
-    struct sockaddr_in servaddr;
     static int win, lose, draw = 0;
+    char sendline[MAXLEN], recvline[MAXLEN];
 
     if (argc != 2) {
-        fprintf(stderr, "usage: %s <IP address of the server>\n", argv[0]);
+        fprintf(stderr, "usage: %s <ip address of the server>\n", argv[0]);
         exit(1);
     }
 
-    // create a socket for the client
-    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    if ((sockfd = connect_to_server(argv[1], PORT)) < 0) {
         perror("creating socket");
         exit(2);
-    }
-
-    memset(&servaddr, 0, sizeof(servaddr));
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = inet_addr(argv[1]);
-    servaddr.sin_port = htons(PORT);
-
-    if (connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0) {
-        perror("connecting to the server");
-        exit(3);
     }
 
     for (;;) {
@@ -74,5 +87,6 @@ int main(int argc, char const* argv[]) {
         }
         print_score(win, lose, draw);
     }
+    return 0;
     return 0;
 }
