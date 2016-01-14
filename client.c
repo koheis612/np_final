@@ -89,5 +89,4 @@ int main(int argc, char const* argv[])
         print_score(win, lose, draw);
     }
     return 0;
-    return 0;
 }
