@@ -2,7 +2,7 @@
 
 int get_random(void) {
     srand((unsigned int)time(NULL));
-    return rand() % 3 + 1;
+    return rand();
 }
 
 void judge(char *result, char *buf, int enemy) {
@@ -62,6 +62,7 @@ void judge(char *result, char *buf, int enemy) {
 int listen_tcp(const char *service) {
     int sockfd, err;
     struct addrinfo hints, *res, *ai;
+    res = NULL;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET6;
@@ -69,6 +70,7 @@ int listen_tcp(const char *service) {
     hints.ai_flags = AI_PASSIVE;
 
     err = getaddrinfo(NULL, service, &hints, &res);
+
     if (err != 0) {
         fprintf(stderr, "getaddrinfo(): %s\n", gai_strerror(err));
         return -1;
@@ -76,6 +78,7 @@ int listen_tcp(const char *service) {
 
     ai = res;
     sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+
     if (sockfd < 0) {
         return -1;
     }
@@ -101,6 +104,7 @@ int main(int argc, char const* argv[]) {
     socklen_t clilen = sizeof(cliaddr);
 
     listenfd = listen_tcp(PORT);
+    
     if (listenfd < 0) {
         perror("server");
     }

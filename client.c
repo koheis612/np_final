@@ -12,6 +12,7 @@ void print_score(int win, int lose, int draw) {
 int connect_to_server(const char *hostname, const char *service) {
     int sockfd, err;
     struct addrinfo hints, *res, *ai;
+    res = NULL;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC; // ipv4/ipv6 dual stack
