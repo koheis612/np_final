@@ -2,7 +2,7 @@
 
 int get_random(void) {
     srand((unsigned int)time(NULL));
-    return rand();
+    return rand() % 3 + 1;
 }
 
 void judge(char *result, char *buf, int enemy) {
@@ -99,6 +99,7 @@ int listen_tcp(const char *service) {
 
 int main(int argc, char const* argv[]) {
     int listenfd, connfd, n;
+    int pid, cpid, status;
     char buf[MAXLEN], result[MAXLEN];
     struct sockaddr_storage cliaddr;
     socklen_t clilen = sizeof(cliaddr);
@@ -116,18 +117,29 @@ int main(int argc, char const* argv[]) {
         connfd = accept(listenfd, (struct sockaddr *)&cliaddr, &clilen);
         printf("received request\n");
 
-        while ((n = recv(connfd, buf, sizeof(buf), 0)) > 0) {
-            printf("String received from and resent to the client: ");
-            printf("%s\n", buf);
-            judge(result, buf, get_random());
-            send(connfd, result, n, 0);
-        }
+        pid = fork();
 
-        if (n < 0) {
-            perror("Read error");
-            exit(1);
+        if (pid == 0) {
+            // child process
+            while ((n = recv(connfd, buf, sizeof(buf), 0)) > 0) {
+                printf("String received from and resent to the client: ");
+                printf("%s\n", buf);
+                judge(result, buf, get_random());
+                send(connfd, result, n, 0);
+            }
+
+            if (n < 0) {
+                perror("Read error");
+                exit(1);
+            }
+            close(connfd);
+        } else {
+            while ((cpid = waitpid(-1, &status, WNOHANG)) > 0);
+            if (cpid < 0 && errno != ECHILD) {
+                perror("waitpid");
+                exit(1);
+            }
         }
-        close(connfd);
     }
     close(listenfd);
     return 0;

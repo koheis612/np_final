@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <time.h>
 #include <netdb.h>
+#include <sys/wait.h>
+#include <errno.h>
 
 #define MAXLEN 256
 #define PORT "3333"
