@@ -3,6 +3,7 @@
 
 ## 概要
 * TCPソケットによるじゃんけんプログラム
+* ソースコード: http://github.com/koheis612/np_final/
 
 ## 機能
 * クライアント側はサーバーに手(rock, paper, scissors)を送る。

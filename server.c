@@ -80,6 +80,7 @@ int listen_tcp(const char *service) {
     sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 
     if (sockfd < 0) {
+        perror("socket");
         return -1;
     }
 
