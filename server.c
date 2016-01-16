@@ -99,9 +99,9 @@ int listen_tcp(const char *service) {
 }
 
 int main(int argc, char const* argv[]) {
-    int listenfd, connfd, n;
+    int listenfd, connfd, n, err;
     int pid, cpid, status;
-    char buf[MAXLEN], result[MAXLEN];
+    char buf[MAXLEN], result[MAXLEN], host[MAXLEN], serv[MAXLEN];
     struct sockaddr_storage cliaddr;
     socklen_t clilen = sizeof(cliaddr);
 
@@ -109,6 +109,7 @@ int main(int argc, char const* argv[]) {
     
     if (listenfd < 0) {
         perror("server");
+        exit(1);
     }
 
     printf("server running.\n");
@@ -116,7 +117,13 @@ int main(int argc, char const* argv[]) {
     for (;;) {
         clilen = sizeof(cliaddr);
         connfd = accept(listenfd, (struct sockaddr *)&cliaddr, &clilen);
-        printf("received request\n");
+        err = getnameinfo((struct sockaddr *)&cliaddr, clilen, host, sizeof(host), serv, sizeof(serv), NI_NUMERICHOST|NI_NUMERICSERV);
+        if (err != 0) {
+            perror("getnameinfo()");
+            exit(1);
+        }
+
+        printf("received request from client (IP: %s, SERV: %s)\n", host, serv);
 
         pid = fork();
 
@@ -133,6 +140,8 @@ int main(int argc, char const* argv[]) {
                 perror("Read error");
                 exit(1);
             }
+
+            printf("connection closed.\n");
             close(connfd);
         } else {
             while ((cpid = waitpid(-1, &status, WNOHANG)) > 0);
